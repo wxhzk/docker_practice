@@ -1,0 +1,46 @@
+#1.列出当前系统中所有的docker镜像
+docker image ls 
+#旧版本：docker images
+#该命令会列出仓库、镜像名(tag)、镜像ID、创建时间、镜像大小
+#docker的镜像是多层存储结构的，由于docker使用的是Union FS文件系统，相同的层文件只需要存储一份；
+#因此镜像的总大小可能比列出来的总和要小的多;可以用使用以下命令查看镜像、容器、数据卷所占用的空间：
+docker system df
+
+#2.虚悬镜像
+#如果我们使用docker build 构建同名镜像或者使用docker pull拉取同名镜像，本地的同名镜像的仓库和镜像名就会变成<none>；
+#此时的镜像称为虚悬镜像，此类镜像已经没有存在的必要，可以删除：
+#专门显示此类镜像的命令:
+docker image ls -f dangling=true
+
+#删除此类镜像的命令：
+docker image purne
+
+#3.中间层镜像
+#由于docker是多层结构，在使用一段时间后，系统中会出现很多中间层依赖镜像，默认的docker image ls只显示顶层镜像；如果希望
+#查看所有镜像，可以使用以下命令:（可能会看到很多无标签的镜像，此类镜像为其他镜像的依赖镜像，不能删除）
+docker image ls -a
+docker image ls -a -q (只显示镜像Id)
+
+
+#4.更多查看指令
+#4.1查看指定仓库镜像
+docker image ls ubuntu
+
+#4.2 查看指定镜像
+docker image ls ubuntu:14.04
+
+#4.3查看自从某个时间之后的镜像
+docker image ls -f since=ubuntu:14.04
+
+#4.4按指定格式显示镜像（格式按照go的模板参数格式）
+docker image ls --format "{{.ID}}: {{.Repository}}"
+
+
+#5.删除镜像(只能删除没有容器的镜像；如果使用该镜像运行了容器，则需先删除依赖的容器再删除该镜像)
+docker image rm [镜像id] [镜像名]
+#对应老版本的docker rmi
+#由于镜像是分层存储的，删除过程会一层一层删除；并且docker多个标签可以对应一个镜像，当删除一个标签时，还有其他标签指向
+#该镜像时，docker image rm 只会执行untagged指令，不会执行deleted指令，只有当没有标签对应该镜像时；才会真正删除该镜像
+
+#删除所有镜像
+docker image rm $(docker image ls -q)
