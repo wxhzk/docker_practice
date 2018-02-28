@@ -93,6 +93,12 @@ ip netns exec netns_test ip link delete eth_1
 删除虚拟网卡
 ip link delete veth_1
 
+删除网桥
+brctl delbr br_name
+
+从网桥上的移除网卡
+brctl delif br_name eth_name1 eth_name2
+
 
 默认情况下，docker中所有容器的虚拟网卡都是成对存在的，一个存在主机(veth[xxxxx])，挂载在docker0这个网桥上，
 另一个挂载在容器的网络名字空间里面(eth0)；所以，主机上的所有容器都可以通过内网IP进行通信。
