@@ -44,3 +44,92 @@ docker image rm [镜像id] [镜像名]
 
 #删除所有镜像
 docker image rm $(docker image ls -q)
+
+
+
+
+
+linux网络桥接
+
+查看网络名字空间
+ip netns list
+
+查看当前的网桥、网卡列表
+ip link list
+
+创建网络名字空间
+ip netns add netns_test
+
+添加一对虚拟网卡
+ip link add veth_1 type veth peer name eth_1
+
+将其中一块虚拟网卡添加进网络名字空间netns_test
+ip link set eth_1 netns netns_test
+
+给网络名字空间的网卡配置ip
+ip netns exec netns_test ip addr add 10.0.0.2/24 dev eth_1
+
+启动网络名字空间里面的虚拟网卡
+ip netns exec netns_test ip link set dev eth_1 up
+
+给主机的虚拟网卡配置Ip
+ip addr add 10.0.0.1/24 dev veth_1
+
+启动主机的虚拟网卡
+ip link set dev veth_1 up
+
+网络名字空间的虚拟网卡ping主机的网卡
+ip netns exec netns_test ping 10.0.0.1
+
+主机虚拟网卡ping网络名字空间的虚拟网卡
+ping 10.0.0.2
+
+删除网络名字空间
+ip netns delete netns_test
+
+删除网络名字空间虚拟网卡
+ip netns exec netns_test ip link delete eth_1
+
+删除虚拟网卡
+ip link delete veth_1
+
+
+默认情况下，docker中所有容器的虚拟网卡都是成对存在的，一个存在主机(veth[xxxxx])，挂载在docker0这个网桥上，
+另一个挂载在容器的网络名字空间里面(eth0)；所以，主机上的所有容器都可以通过内网IP进行通信。
+
+练习：配置docker容器的网络
+1.首先，启动两没有网络配置的容器
+docker run --rm -it --net=none --name docker1 ubuntu:14.04 bash
+docker run --rm -it --net=none --name docker2 ubuntu:14.04 bash
+
+2.查询两docker容器的进程id，并对各自的网络名字空间设置软链接
+docker inspect --format '{{ .State.Pid}}' docker1
+6225 
+docker inspect --format '{{ .State.Pid}}' docker2
+6385
+
+sudo ln -s /proc/6225/ns/net /var/run/netns/netns_docker_1
+sudo ln -s /proc/6385/ns/net /var/run/netns/netns_docker_1
+
+3.添加两对(4块)虚拟网卡
+sudo ip link add veth1 type veth peer name eth1
+sudo ip link add veth2 type veth peer name eth2
+
+4.将两块网卡分别设置进相应容器的网络名字空间
+sudo ip link set eth1 netns netns_docker_1
+sudo ip link set eth2 netns netns_docker_2
+
+5.分别给网络名字空间里面的网卡设置ip，并启动网卡
+sudo ip netns exec netns_docker_1 ip addr add 10.0.0.2/24 dev eth1
+sudo ip netns exec netns_docker_2 ip addr add 10.0.0.3/24 dev eth2
+sudo ip netns exec netns_docker_1 ip link set dev eth1 up
+sudo ip netns exec netns_docker_2 ip link set dev eth2 up
+
+6.添加虚拟网桥，并将刚才创建的虚拟网卡中的剩余两块配置在网桥上，并启动
+sudo brctl addbr br0
+brctl addif br0 veth1 veth2
+sudo ifconfig br0 up
+sudo ifconfig veth1 up
+sudo ifconfig veth2 up
+
+7.在两容器中通信
