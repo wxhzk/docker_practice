@@ -46,7 +46,24 @@ docker image rm [镜像id] [镜像名]
 docker image rm $(docker image ls -q)
 
 
+Docker Volume操作
+1.创建单独的volume
+docker volume create --name test_v 
 
+2.通过运行时+ -v参数来指定volume
+docker run -it -v /data ubuntu:14.04 bash
+以上两个命令docker会在本地主机上自动生成一个随机目录挂载到容器内
+
+3.运行时指定目录挂载到容器
+docker run -it -v `pwd`:/data ubuntu:14.04 bash
+指定当前目录挂载到容器的/data目录上，此时如果镜像本身指定了/data作为volume，则原来的目录内的文件不会拷贝到容器中；主机的当前目录文件会拷贝到容器的/data目录；
+
+4.运行时指定容器卷挂载到容器
+docker run -it -v test_v:/data ubuntu:14.04 bash
+此时如果docker volumels中如果没有test_v这个容器卷，则docker会自动创建名为test_v的容器卷;
+
+如果运行容器时，没有指定目录或者容器卷，而使用docker自动生成的目录作为卷挂载到容器中的，
+执行docker rm container -v会把卷中的所有文件一并删除；其他两种方式的文件不会删除
 
 
 linux网络桥接

@@ -1,0 +1,14 @@
+FROM ubuntu:16.04
+
+ARG VERSION=1.10
+COPY go$VERSION.linux-amd64.tar.gz /usr/src/ 
+RUN sed -i -e 's/archive.ubuntu.com/mirrors.aliyun.com/g' -e 's/security.ubuntu/mirrors.aliyun/g' /etc/apt/sources.list \
+	&& apt-get update -y \
+	&& apt-get install build-essential -y \
+	&& tar -C /usr/local -xvf /usr/src/go$VERSION.linux-amd64.tar.gz \
+	&& rm /usr/src/go$VERSION.linux-amd64.tar.gz \
+	&& rm -rf /var/lib/apt/lists/*
+ENV GOPATH /root/gopath
+ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin:.
+WORKDIR /root/gopath
+
