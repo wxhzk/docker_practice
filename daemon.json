@@ -1,0 +1,12 @@
+{
+    "registry-mirrors": [
+        "https://registry.docker-cn.com"
+    ],
+    "graph": "/data/docker",
+    "hosts": [
+        "unix:///var/run/docker.sock",
+        "tcp://0.0.0.0:2375"
+    ]
+}
+
+

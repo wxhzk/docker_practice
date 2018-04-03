@@ -2,7 +2,7 @@
 #Centos7 安装docker
 
 #1.删除旧版本
-sudo yum remove docker docker-common docker-selinux docker-engine
+sudo yum remove -y docker-ce docker docker-common docker-selinux docker-engine
 
 #2.安装依赖包
 sudo yum install -y yum-utils device-mapper-persistent-data lvm
@@ -16,17 +16,19 @@ sudo yum-config-manager --add-repo https://mirrors.ustc.edu.cn/docker-ce/linux/c
 
 #4.安装docker-ce软件包
 sudo yum makecache fast
-sudo yum install docker-ce
+sudo yum install -y docker-ce
 
-#5.开启开机启动(新版本)
-sudo systemctl enable docker
-sudo systemctl start docker
-
-#6.默认情况下， docker 命令会使用 Unix socket 与 Docker 引擎通讯。而只有 root 用户和docker 组的用户才可以访问 
+#5.默认情况下， docker 命令会使用 Unix socket 与 Docker 引擎通讯。而只有 root 用户和docker 组的用户才可以访问 
 #Docker 引擎的 Unix socket。出于安全考虑，一般 Linux 系统上不会直接使用 root 用户。因此，更好地做法是将需要使
 #用 docker 的用户加入 docker用户组
 sudo groupadd docker
 sudo usermod -aG docker $USER
+
+#6.开启开机启动(新版本)
+sudo mkdir /etc/docker && sudo cp ./daemon.json /etc/docker/ -f
+sudo systemctl enable docker
+sudo systemctl start docker
+
 
 #默认配置下，如果在 CentOS 使用 Docker CE 看到下面的这些警告信息：
 #	WARNING: bridge-nf-call-iptables is disabled
